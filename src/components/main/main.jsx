@@ -4,7 +4,6 @@ const Main = () =>{
     return(
         <div className="flex justify-around">
             <Input/>
-            <Output/>
         </div>
            
     )
