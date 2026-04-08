@@ -51,8 +51,22 @@ const Grid = ({grid,setGrid,start,setStart}) =>{
 const Button = ({ grid, setGrid, start, setStart }) => {
 
   const handleSend = async () => {
-    console.log("Grid:", grid);
-    console.log("Start:", start);
+    try{
+        const response = await fetch("",{
+            method: "POST",
+            headers: {
+                "content-Type": "application/json",
+            },
+            body: JSON.stringify({grid,start})
+        })
+        if (!response.ok){
+            throw new Error("Gửi dữ liệu thất bại!")
+        }
+        const data = await response.json();
+        alert ("Gửi thành công! Phản hồi: ",(data.message || JSON.stringify(data)))
+    } catch (error){
+        alert ("Lỗi khi gửi dữ liệu "+ error.message)
+    }
   };
 
   const handleReset = () => {
