@@ -1,1 +1,244 @@
-/**\n * ============================================\n * FILE: HƯỚNG DẪN BACKEND - HAMILTONIAN PATH\n * ============================================\n */\n\n/**\n * █ CẤU TRÚC THƯ MỤC\n * \n * backend/\n * ├── server.js                         ← Entry point (khởi tạo server)\n * ├── app.js                            ← Express config\n * ├── package.json\n * │\n * ├── config/\n * │   └── constants.js                  ← Hằng số (PORT, GRID_SIZE...)\n * │\n * ├── routes/\n * │   └── solverRoutes.js               ← Định nghĩa API endpoints\n * │\n * ├── controllers/\n * │   └── solverController.js           ← Xử lý HTTP request/response\n * │\n * ├── services/\n * │   └── solverService.js              ← Logic business (chính)\n * │\n * ├── algorithms/                       ← ← ← MỚI!\n * │   └── hamiltonianPath.js            ← Thuật toán Hamiltonian Path\n * │\n * └── utils/\n *     ├── graphUtils.js                 ← Hàm tiện ích đồ thị\n *     └── hamiltonianPathExample.js     ← Ví dụ sử dụng\n */\n\n/**\n * █ LUỒNG DỮ LIỆU\n * \n * 1. FRONTEND gửi:\n *    {\n *      grid: [[null, null, ...], [null, 1, ...], ...],  // 2D array\n *      start: [0, 0]                                    // [row, col]\n *    }\n *    ↓\n *    POST http://localhost:5000/api/send-result\n * \n * 2. Backend xử lý:\n *    \n *    server.js\n *      ↓\n *    app.js (middleware)\n *      ↓\n *    routes/solverRoutes.js\n *      ↓\n *    controllers/solverController.js (validate input)\n *      ↓\n *    services/solverService.js (logic chính)\n *      ↓\n *    algorithms/hamiltonianPath.js (DFS + backtracking)\n *      ↓\n *    utils/graphUtils.js (helper functions)\n * \n * 3. FRONTEND nhận:\n *    {\n *      success: true,\n *      message: \"Tìm được đường đi Hamilton!\",\n *      data: {\n *        grid: [...],\n *        start: [0, 0],\n *        path: [[0,0], [0,1], [0,2], ...],  // Tọa độ grid\n *        status: \"solved\",\n *        stats: {\n *          vertexCount: 9,\n *          numEdges: 12,\n *          dfsCallCount: 45,\n *          executionTime: \"2ms\"\n *        }\n *      }\n *    }\n */\n\n/**\n * █ CÁC FILE CHÍNH & CÔNG DỤNG\n */\n\n/**\n * 1. algorithms/hamiltonianPath.js\n * \n * CÔNG DỤNG: Thuật toán tìm đường đi Hamilton\n * \n * Hàm chính:\n * - findHamiltonianPath(adjacencyList, startVertex, numVertices, useHeuristic)\n *   → Trả về mảng path hoặc null\n * \n * - findHamiltonianPathWithStats(...)\n *   → Trả về {path, found, callCount, executionTime, heuristicUsed}\n * \n * Nguyên lý:\n * - DFS: Đệ quy tìm kiếm theo chiều sâu\n * - Backtracking: Hoàn tác khi không tìm được\n * - Heuristic: Degree heuristic (ưu tiên đỉnh có ít lựa chọn)\n * \n * Phức tạp:\n * - Time: O(n!) worst case, nhưng thường nhanh hơn với heuristic\n * - Space: O(n) cho recursion stack\n */\n\n/**\n * 2. utils/graphUtils.js\n * \n * CÔNG DỤNG: Hàm tiện ích xử lý đồ thị\n * \n * Hàm chính:\n * - gridToAdjacencyList(grid)\n *   → Chuyển grid 2D thành adjacency list\n *   → Mỗi ô không là vật cản = 1 đỉnh\n *   → Ô kế tiếp nhau = cạnh nối\n * \n * - countUnvisitedNeighbors(neighbors, visited)\n *   → Đếm số neighbor chưa visit\n *   → Dùng cho degree heuristic\n * \n * - isValidGraph(adjacencyList, numVertices)\n *   → Kiểm tra đồ thị có hợp lệ không\n * \n * - getGraphInfo(adjacencyList, numVertices)\n *   → Lấy thông tin: số đỉnh, cạnh, bậc trung bình...\n */\n\n/**\n * 3. services/solverService.js\n * \n * CÔNG DỤNG: Logic business chính\n * \n * Hàm:\n * - solvePuzzle(grid, start)\n *   ↓\n *   1. Validate input\n *   2. Chuyển grid → adjacency list (graphUtils)\n *   3. Tìm vertex ID của start position\n *   4. Gọi thuật toán Hamilton (hamiltonianPath)\n *   5. Chuyển đổi result → tọa độ grid\n *   6. Trả về object chi tiết\n */\n\n/**\n * █ CÁCH CHẠY & TEST\n */\n\n/**\n * 1. CHẠY SERVER\n * \n *    cd backend\n *    npm install\n *    node server.js\n * \n *    → Server chạy tại http://localhost:5000\n */\n\n/**\n * 2. TEST TRỰC TIẾP (không qua HTTP)\n * \n *    Dùng file: utils/hamiltonianPathExample.js\n * \n *    node utils/hamiltonianPathExample.js\n * \n *    → Chạy 5 ví dụ để hiểu cách hoạt động\n */\n\n/**\n * 3. TEST VỀ HTTP (qua Frontend)\n * \n *    POST http://localhost:5000/api/send-result\n *    \n *    Body:\n *    {\n *      \"grid\": [\n *        [null, null, null],\n *        [null, 1, null],\n *        [null, null, null]\n *      ],\n *      \"start\": [0, 0]\n *    }\n */\n\n/**\n * █ HEURISTIC - DEGREE HEURISTIC\n * \n * Định nghĩa:\n * - Tại mỗi bước, ưu tiên chọn đỉnh có ít neighbor chưa visit nhất\n * - \"Ít lựa chọn\" → \"dễ bị kẹt\" → ưu tiên để tránh dead end\n * \n * Ví dụ:\n * Đỉnh A có 5 unvisited neighbors\n * Đỉnh B có 1 unvisited neighbor\n * → Chọn B trước (để tránh B bị cô lập)\n * \n * Hiệu quả:\n * - Giảm đáng kể số lần DFS gọi\n * - Tìm được path nhanh hơn\n * - Không làm thay đổi kết quả (vẫn tìm Hamiltonian path nếu tồn tại)\n */\n\n/**\n * █ GRID → ADJACENCY LIST\n * \n * Ví dụ chuyển đổi:\n * \n * Grid 2x2:\n * [null, null]\n * [null, 1]    ← Vật cản\n * \n * Bước 1: Đánh số các ô không phải vật cản\n * [0, 1]\n * [2, X]  ← X = vật cản (bỏ)\n * \n * Bước 2: Kết nối ô kế tiếp nhau\n * 0 -- 1\n * |    |\n * 2 -- (không có)\n * \n * Adjacency List:\n * {\n *   0: [1, 2],    // 0 kết nối 1 (phải), 2 (dưới)\n *   1: [0],       // 1 kết nối 0 (trái) - không kết nối dưới (vật cản)\n *   2: [0]        // 2 kết nối 0 (trên)\n * }\n */\n\n/**\n * █ VÍ DỤ INPUT/OUTPUT\n * \n * INPUT (Frontend gửi):\n * {\n *   \"grid\": [\n *     [null, null, null],\n *     [null, 1, null],\n *     [null, null, null]\n *   ],\n *   \"start\": [0, 0]\n * }\n * \n * OUTPUT (Backend trả về):\n * {\n *   \"success\": true,\n *   \"message\": \"Dữ liệu nhận thành công\",\n *   \"data\": {\n *     \"grid\": [[null, null, null], [null, 1, null], [null, null, null]],\n *     \"start\": [0, 0],\n *     \"gridSize\": \"3x3\",\n *     \"obstacleCount\": 1,\n *     \"path\": [[0,0], [0,1], [0,2], [1,2], [2,2], [2,1], [2,0], [1,0]],\n *     \"status\": \"solved\",\n *     \"message\": \"Tìm được đường đi Hamilton!\",\n *     \"stats\": {\n *       \"vertexCount\": 8,\n *       \"numEdges\": 11,\n *       \"avgDegree\": 2.75,\n *       \"dfsCallCount\": 24,\n *       \"executionTime\": \"1ms\",\n *       \"heuristicUsed\": true\n *     }\n *   }\n * }\n */\n\n/**\n * █ DEBUG & TROUBLESHOOTING\n * \n * 1. \"Vị trí bắt đầu không hợp lệ (là vật cản)\"\n *    → start position đặt ở ô vật cản (= 1)\n *    → Chuyển start sang ô trống\n * \n * 2. \"Không có đường đi Hamilton\"\n *    → Đồ thị quá phân tán (có ô/nhóm ô bị cô lập)\n *    → Có \"cụm\" ô bị ngắt riêng\n *    → Bình thường, đây là kết quả đúng\n * \n * 3. \"Đồ thị không hợp lệ\"\n *    → Có lỗi trong quá trình chuyển grid → adjacency list\n *    → Kiểm tra grid có đúng định dạng không\n * \n * 4. Chạy chậm\n *    → Grid quá lớn (> 20x20)\n *    → Dùng Hamiltonian path là giải pháp\"approximate\" thôi\n *    → Có thể set timeout nếu cần\n */\n
+FILE HUONG DAN BACKEND HAMILTONIAN PATH
+
+CAU TRUC THU MUC
+
+backend/
+  server.js                         Entry point khoi tao server
+  app.js                            Express config
+  package.json
+
+  config/
+    constants.js                    Hang so PORT GRID_SIZE
+
+  routes/
+    solverRoutes.js                 Dinh nghia API endpoints
+
+  controllers/
+    solverController.js             Xu ly HTTP request response
+
+  services/
+    solverService.js                Logic business chinh
+
+  algorithms/
+    hamiltonianPath.js              Thuat toan Hamiltonian Path
+
+  utils/
+    graphUtils.js                   Ham tien ich do thi
+    hamiltonianPathExample.js       Vi du su dung
+
+
+LUONG DU LIEU
+
+1 Frontend gui
+{
+  grid [[null null ...] [null 1 ...]]
+  start [0 0]
+}
+
+POST http localhost 5000 api send result
+
+2 Backend xu ly
+
+server.js
+  app.js middleware
+  routes solverRoutes.js
+  controllers solverController.js validate input
+  services solverService.js logic chinh
+  algorithms hamiltonianPath.js DFS backtracking
+  utils graphUtils.js helper
+
+3 Frontend nhan
+
+{
+  success true
+  message Tim duoc duong di Hamilton
+  data
+    grid [...]
+    start [0 0]
+    path [[0 0] [0 1] ...]
+    status solved
+    stats
+      vertexCount 9
+      numEdges 12
+      dfsCallCount 45
+      executionTime 2ms
+}
+
+
+CAC FILE CHINH VA CONG DUNG
+
+1 algorithms hamiltonianPath.js
+
+Cong dung Thuat toan tim duong di Hamilton
+
+Ham chinh
+findHamiltonianPath adjacencyList startVertex numVertices useHeuristic
+Tra ve path hoac null
+
+findHamiltonianPathWithStats
+Tra ve path found callCount executionTime heuristicUsed
+
+Nguyen ly
+DFS tim kiem theo chieu sau
+Backtracking hoan tac
+Heuristic uu tien dinh co it lua chon
+
+Do phuc tap
+Time O n factorial worst case
+Space O n
+
+
+2 utils graphUtils.js
+
+Cong dung Ham tien ich do thi
+
+Ham chinh
+gridToAdjacencyList grid
+Chuyen grid 2D thanh adjacency list
+
+countUnvisitedNeighbors neighbors visited
+Dem so neighbor chua visit
+
+isValidGraph adjacencyList numVertices
+Kiem tra hop le
+
+getGraphInfo adjacencyList numVertices
+Lay thong tin do thi
+
+
+3 services solverService.js
+
+Cong dung Logic business chinh
+
+Ham
+solvePuzzle grid start
+
+Buoc xu ly
+Validate input
+Chuyen grid sang adjacency list
+Tim vertex ID cua start
+Goi thuat toan Hamilton
+Chuyen ket qua sang toa do grid
+Tra ve object
+
+
+CACH CHAY VA TEST
+
+1 Chay server
+
+cd backend
+npm install
+node server.js
+
+Server chay tai http localhost 5000
+
+
+2 Test truc tiep
+
+node utils hamiltonianPathExample.js
+
+
+3 Test HTTP
+
+POST http localhost 5000 api send result
+
+Body
+{
+  grid [
+    [null null null]
+    [null 1 null]
+    [null null null]
+  ]
+  start [0 0]
+}
+
+
+HEURISTIC DEGREE HEURISTIC
+
+Dinh nghia
+Tai moi buoc uu tien dinh co it neighbor chua visit
+
+Vi du
+Dinh A co 5 neighbor
+Dinh B co 1 neighbor
+Chon B truoc
+
+Hieu qua
+Giam so lan DFS
+Tim nhanh hon
+Khong thay doi ket qua
+
+
+GRID TO ADJACENCY LIST
+
+Vi du
+
+Grid 2x2
+[null null]
+[null 1]
+
+Danh so
+[0 1]
+[2 X]
+
+Ket noi
+0 1
+0 2
+
+Adjacency List
+0 [1 2]
+1 [0]
+2 [0]
+
+
+VI DU INPUT OUTPUT
+
+Input
+{
+  grid [
+    [null null null]
+    [null 1 null]
+    [null null null]
+  ]
+  start [0 0]
+}
+
+Output
+{
+  success true
+  message Du lieu nhan thanh cong
+  data
+    grid [...]
+    start [0 0]
+    gridSize 3x3
+    obstacleCount 1
+    path [[0 0] [0 1] ...]
+    status solved
+    message Tim duoc duong di Hamilton
+    stats
+      vertexCount 8
+      numEdges 11
+      avgDegree 2.75
+      dfsCallCount 24
+      executionTime 1ms
+      heuristicUsed true
+}
+
+
+DEBUG TROUBLESHOOTING
+
+Vi tri bat dau khong hop le
+Start nam o vat can
+Chuyen sang o trong
+
+Khong co duong di Hamilton
+Do thi bi phan tach
+Day la ket qua dung
+
+Do thi khong hop le
+Loi khi chuyen grid
+Kiem tra format
+
+Chay cham
+Grid qua lon
+Nen gioi han kich thuoc hoac them timeout
