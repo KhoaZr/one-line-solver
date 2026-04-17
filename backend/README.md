@@ -1,1 +1,192 @@
-/**\n * ═══════════════════════════════════════════════════════════════\n * ONE LINE SOLVER - BACKEND HAMILTONIAN PATH\n * ═══════════════════════════════════════════════════════════════\n * \n * ✅ HOÀN THÀNH TOÀN BỘ IMPLEMENTATION\n * \n * ═══════════════════════════════════════════════════════════════\n */\n\n\n/**\n * 🎯 QUICK START\n * \n * 1. Chạy server:\n *    $ cd backend\n *    $ npm install\n *    $ npm start\n *    \n *    → Server sẽ chạy tại http://localhost:5000\n * \n * 2. Chạy ví dụ (không cần HTTP):\n *    $ npm run example\n *    \n *    → Sẽ chạy 5 ví dụ giúp bạn hiểu cách hoạt động\n */\n\n\n/**\n * 📁 CẤUTRÚC THƯ MỤC\n * \n * backend/\n * │\n * ├── algorithms/                    ← ← ← THƯ MỤC MỚI\n * │   └── hamiltonianPath.js         ← Thuật toán DFS + Backtracking\n * │\n * ├── utils/\n * │   ├── graphUtils.js              ← Grid ↔ Graph conversion\n * │   └── hamiltonianPathExample.js  ← 5 ví dụ sử dụng\n * │\n * ├── services/\n * │   └── solverService.js           ← Cập nhật: kết nối algorithm\n * │\n * ├── controllers/solverController.js\n * ├── routes/solverRoutes.js\n * ├── app.js\n * ├── server.js\n * ├── package.json                   ← Cập nhật: thêm scripts\n * │\n * └── HAMILTONIAN_GUIDE.md           ← Hướng dẫn chi tiết\n */\n\n\n/**\n * 🧠 ĐỊ ĐỊNH NGHĨA: Hamiltonian Path\n * \n * Định nghĩa:\n * - Đường đi đi qua mỗi đỉnh của đồ thị ĐÚNG 1 LẦN\n * - Không yêu cầu quay về điểm bắt đầu (khác Hamiltonian Cycle)\n * \n * Ví dụ trong grid:\n * Ô:   [0] [1] [2]\n *       [3] [X] [4]\n *       [5] [6] [7]\n *       \n *       X = vật cản\n * \n * Hamiltonian Path từ ô 0:\n * [0] → [1] → [2] → [4] → [7] → [6] → [5] → [3]\n * (ghé qua 8 ô, mỗi ô 1 lần)\n */\n\n\n/**\n * ⚙️ THUẬT TOÁN: DFS + Backtracking\n * \n * Pseudo code:\n * \n * function dfs(current, visited, path):\n *     if path.length == n:  // Đã ghé qua tất cả\n *         return true\n *     \n *     for each neighbor of current:\n *         if not visited[neighbor]:\n *             visited[neighbor] = true\n *             path.push(neighbor)\n *             \n *             if dfs(neighbor, visited, path):\n *                 return true  // Tìm được!\n *             \n *             // Backtrack (hoàn tác)\n *             path.pop()\n *             visited[neighbor] = false\n *     \n *     return false  // Không tìm được\n * \n * \n * ⚡ HEURISTIC: Degree Heuristic\n * \n * Tại mỗi bước, ưu tiên:\n * - Các neighbor có ít \"lựa chọn tiếp theo\" nhất\n * - Tránh \"dead end\" (đỉnh bị cô lập)\n * \n * Ví dụ:\n * Neighbor A: 5 unvisited neighbors  → Chọn sau\n * Neighbor B: 1 unvisited neighbor   → Chọn trước!\n * \n * Hiệu quả:\n * - Giảm số lần DFS gọi (thường 2-5x)\n * - Tìm được path nhanh hơn\n */\n\n\n/**\n * 🔄 LUỒNG DỮ LIỆU\n * \n * Frontend gửi:\n *     ↓\n * POST /api/send-result\n *     ↓\n * app.js (middleware: CORS, JSON parser)\n *     ↓\n * solverRoutes.js (router)\n *     ↓\n * solverController.js (validate input)\n *     ↓\n * solverService.js (logic chính):\n *     1. grid → adjacency list        (graphUtils)\n *     2. Tìm vertex ID của start      (graphUtils)\n *     3. Gọi hamiltonianPath          (algorithms)\n *     4. path (IDs) → tọa độ grid\n *     ↓\n * Trả về JSON response\n *     ↓\n * Frontend nhận kết quả\n */\n\n\n/**\n * 📊 CẤU TRÚC INPUT/OUTPUT\n * \n * REQUEST (Frontend):\n * {\n *   \"grid\": [\n *     [null, null, null],\n *     [null, 1,    null],\n *     [null, null, null]\n *   ],\n *   \"start\": [0, 0]\n * }\n * \n * RESPONSE (Backend):\n * {\n *   \"success\": true,\n *   \"message\": \"Dữ liệu nhận thành công\",\n *   \"data\": {\n *     \"grid\": [[null, null, null], ...],\n *     \"start\": [0, 0],\n *     \"gridSize\": \"3x3\",\n *     \"obstacleCount\": 1,\n *     \"path\": [\n *       [0,0], [0,1], [0,2],\n *       [1,2], [2,2], [2,1],\n *       [2,0], [1,0]\n *     ],\n *     \"status\": \"solved\",\n *     \"message\": \"Tìm được đường đi Hamilton!\",\n *     \"stats\": {\n *       \"vertexCount\": 8,          // Số ô trống\n *       \"numEdges\": 11,            // Số cạnh\n *       \"avgDegree\": 2.75,         // Bậc trung bình\n *       \"dfsCallCount\": 24,        // Số lần DFS gọi\n *       \"executionTime\": \"1ms\",    // Thời gian thực thi\n *       \"heuristicUsed\": true      // Dùng heuristic?\n *     }\n *   }\n * }\n */\n\n\n/**\n * 📚 CÁC FILE CHÍNH\n * \n * 1. hamiltonianPath.js\n *    • Thuật toán DFS + Backtracking\n *    • findHamiltonianPath() - trả về path hoặc null\n *    • findHamiltonianPathWithStats() - trả về chi tiết\n * \n * 2. graphUtils.js\n *    • gridToAdjacencyList() - chuyển grid → adjacency list\n *    • countUnvisitedNeighbors() - đếm neighbor chưa visit\n *    • isValidGraph() - kiểm tra tính hợp lệ\n *    • getGraphInfo() - lấy thông tin đồ thị\n * \n * 3. solverService.js (cập nhật)\n *    • solvePuzzle() - logic chính\n *    • Kết nối controller → algorithms → utils\n * \n * 4. hamiltonianPathExample.js\n *    • 5 ví dụ sử dụng\n *    • Chạy: npm run example\n */\n\n\n/**\n * 🚀 CÁCH SỬ DỤNG\n * \n * CÁCH 1: Chạy server (sử dụng HTTP):\n *     $ npm start\n *     → Server nghe tại http://localhost:5000\n *     → Frontend gửi POST request\n * \n * CÁCH 2: Chạy ví dụ (test trực tiếp):\n *     $ npm run example\n *     → Chạy 5 ví dụ, không cần server chạy\n *     → Tốt để debug & học cách hoạt động\n * \n * CÁCH 3: Sử dụng trong code:\n *     const hamiltonianPath = require('./algorithms/hamiltonianPath');\n *     const path = hamiltonianPath.findHamiltonianPath(\n *         adjacencyList, startVertex, numVertices, true\n *     );\n */\n\n\n/**\n * 📈 HIỆU SUẤT & PHỨC TẠP\n * \n * Time Complexity:\n * - Worst case: O(n!)  (thử tất cả permutation)\n * - Best case: O(n)   (tìm được ngay)\n * - Average: O(n * 2^n) với heuristic\n * \n * Space Complexity: O(n)\n * - visited array: O(n)\n * - path array: O(n)\n * - Recursion stack: O(n)\n * \n * Heuristic giúp:\n * - Giảm branch factor\n * - Tìm được nhanh hơn\n * - Thường 2-5x nhanh hơn không heuristic\n */\n\n\n/**\n * ⚠️ LIMITATION & EDGE CASES\n * \n * 1. Grid quá lớn (> 30x30):\n *    → NP-hard problem → có thể chậm\n *    → Có thể set timeout nếu cần\n * \n * 2. Không có Hamiltonian Path:\n *    → Đồ thị bị \"ngắt\" (chia thành nhiều thành phần)\n *    → Status: \"no_solution\"\n *    → Bình thường, không phải lỗi\n * \n * 3. Vị trí start là vật cản:\n *    → Status: \"invalid_start\"\n *    → Chuyển start sang ô trống\n * \n * 4. Hiệu ứng \"randomness\" (không có):\n *    → Dùng degree heuristic (deterministic)\n *    → Kết quả luôn như nhau\n *    → Nếu cần random, có thể thêm random tie-breaking\n */\n\n\n/**\n * 🔍 DEBUG & TROUBLESHOOTING\n * \n * 1. Kiểm tra adjacency list đúng:\n *    $ npm run example\n *    → Ví dụ 2 hiển thị adjacency list từ grid\n * \n * 2. Kiểm tra heuristic hiệu quả:\n *    $ npm run example\n *    → Ví dụ 3 so sánh với/không heuristic\n * \n * 3. Kiểm tra đồ thị hợp lệ:\n *    $ npm run example\n *    → Ví dụ 5 kiểm tra tính hợp lệ\n * \n * 4. Log chi tiết:\n *    - Chỉnh sửa code, thêm console.log\n *    - Hoặc chạy npm run example\n */\n\n\n/**\n * 📖 THAM KHẢO TÀI LIỆU\n * \n * File: HAMILTONIAN_GUIDE.md\n * - Hướng dẫn chi tiết từng phần\n * - Ví dụ chuyển đổi grid → adjacency list\n * - Luồng dữ liệu đầu đến cuối\n * - Cách debug & troubleshooting\n * \n * Code comments:\n * - Mỗi file có comment khối explain công dụng\n * - Mỗi hàm có comment explain logic\n * - Mỗi bước trong hàm có comment inline\n */\n\n\n/**\n * ═══════════════════════════════════════════════════════════════\n * BẮTĐẦU NGAY!\n * \n * 1. $ npm install\n * 2. $ npm run example    ← Xem 5 ví dụ\n * 3. $ npm start          ← Chạy server\n * 4. Tạo frontend request → POST /api/send-result\n * ═══════════════════════════════════════════════════════════════\n */\n
+# One Line Solver Backend
+
+Backend của dự án **One Line Solver** dùng Node.js, Express và thuật toán DFS + backtracking để tìm **Hamiltonian Path** trên một lưới 2D.
+
+## Mục tiêu
+
+- Nhận grid và vị trí start từ frontend.
+- Chuyển grid thành đồ thị.
+- Tìm đường đi Hamilton nếu tồn tại.
+- Trả kết quả chi tiết cho frontend để hiển thị.
+
+## Công nghệ
+
+- Node.js
+- Express
+- CORS
+- JavaScript (CommonJS)
+
+## Cấu trúc thư mục
+
+```text
+backend/
+├── server.js
+├── app.js
+├── package.json
+├── config/
+│   └── constants.js
+├── routes/
+│   └── solverRoutes.js
+├── controllers/
+│   └── solverController.js
+├── services/
+│   └── solverService.js
+├── algorithms/
+│   └── hamiltonianPath.js
+└── utils/
+    ├── graphUtils.js
+    └── hamiltonianPathExample.js
+```
+
+## Cách chạy
+
+### 1. Cài đặt dependencies
+
+```bash
+cd backend
+npm install
+```
+
+### 2. Chạy server
+
+```bash
+npm start
+```
+
+Backend mặc định chạy tại:
+
+```text
+http://localhost:5001
+```
+
+### 3. Chạy ví dụ thuật toán
+
+```bash
+npm run example
+```
+
+Lệnh này chạy file ví dụ trong `utils/hamiltonianPathExample.js` để test thuật toán trực tiếp mà không cần frontend.
+
+## API chính
+
+### POST `/api/send-result`
+
+Endpoint nhận dữ liệu từ frontend.
+
+#### Request body
+
+```json
+{
+  "grid": [[0, 0, 0], [0, 1, 0], [0, 0, 0]],
+  "start": [0, 0]
+}
+```
+
+#### Ý nghĩa dữ liệu
+
+- `grid`: ma trận 2D.
+- `0`: ô đi được.
+- `1`: vật cản.
+- `start`: vị trí bắt đầu theo dạng `[row, col]`.
+
+#### Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "grid": [[0, 0, 0], [0, 1, 0], [0, 0, 0]],
+    "start": [0, 0],
+    "gridSize": "3x3",
+    "obstacleCount": 1,
+    "path": [[0, 0], [0, 1], [0, 2]],
+    "status": "solved",
+    "message": "Tìm được đường đi Hamilton!",
+    "stats": {
+      "vertexCount": 8,
+      "numEdges": 11,
+      "avgDegree": 2.75,
+      "dfsCallCount": 24,
+      "executionTime": "1ms",
+      "heuristicUsed": true
+    }
+  }
+}
+```
+
+## Luồng xử lý
+
+1. Frontend gửi `grid` và `start`.
+2. `solverController` kiểm tra dữ liệu đầu vào.
+3. `solverService` chuyển grid thành đồ thị.
+4. `hamiltonianPath.js` chạy DFS + backtracking.
+5. Kết quả được đổi từ vertex ID sang tọa độ grid.
+6. Backend trả JSON cho frontend.
+
+## Quy ước dữ liệu
+
+### Backend
+
+- `0` = ô đi được
+- `1` = vật cản
+
+### Frontend
+
+Frontend phải đổi dữ liệu về đúng format backend trước khi gửi.
+
+## Các trạng thái trả về
+
+- `solved`: tìm được đường đi.
+- `no_solution`: không có đường đi Hamilton.
+- `invalid_start`: vị trí start không hợp lệ.
+
+## Heuristic
+
+Backend dùng **Degree Heuristic**:
+
+- Ưu tiên đỉnh có ít lựa chọn tiếp theo nhất.
+- Mục đích là tránh đi vào ngõ cụt quá sớm.
+- Thường giúp thuật toán chạy nhanh hơn.
+
+## Xử lý lỗi thường gặp
+
+### 1. `Vị trí bắt đầu không hợp lệ`
+
+Nguyên nhân:
+
+- Start nằm trên ô vật cản.
+
+Cách xử lý:
+
+- Chọn lại start trên ô đi được.
+
+### 2. `Không có đường đi Hamilton`
+
+Nguyên nhân:
+
+- Grid quá chia cắt.
+- Có ô bị cô lập.
+
+Đây là kết quả hợp lệ, không phải lỗi hệ thống.
+
+### 3. Chạy chậm
+
+Nguyên nhân:
+
+- Hamiltonian Path là bài toán NP-hard.
+- Grid càng lớn thì càng chậm.
+
+Cách xử lý:
+
+- Giảm kích thước grid.
+- Dùng heuristic.
+- Thêm timeout nếu cần.
+
+## Ghi chú cho người mới học
+
+- `server.js` chỉ dùng để khởi động server.
+- `app.js` dùng để cấu hình middleware và route.
+- `controller` xử lý request/response.
+- `service` chứa logic chính.
+- `algorithm` chứa thuật toán tìm đường.
+- `utils` chứa các hàm hỗ trợ.

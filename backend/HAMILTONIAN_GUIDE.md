@@ -1,244 +1,245 @@
-FILE HUONG DAN BACKEND HAMILTONIAN PATH
+# Hướng dẫn Hamiltonian Path Backend
 
-CAU TRUC THU MUC
+Tài liệu này giải thích từng phần của backend theo cách dễ hiểu cho người mới học Node.js.
 
+## 1. Hamiltonian Path là gì?
+
+Hamiltonian Path là một đường đi trong đồ thị mà:
+
+- đi qua mỗi đỉnh đúng 1 lần
+- không cần quay về điểm xuất phát
+
+Trong bài toán này, mỗi ô đi được trên grid sẽ được xem như một đỉnh của đồ thị.
+
+## 2. Cấu trúc backend
+
+```text
 backend/
-  server.js                         Entry point khoi tao server
-  app.js                            Express config
-  package.json
+├── server.js
+├── app.js
+├── package.json
+├── routes/
+│   └── solverRoutes.js
+├── controllers/
+│   └── solverController.js
+├── services/
+│   └── solverService.js
+├── algorithms/
+│   └── hamiltonianPath.js
+└── utils/
+    ├── graphUtils.js
+    └── hamiltonianPathExample.js
+```
 
-  config/
-    constants.js                    Hang so PORT GRID_SIZE
+## 3. Luồng dữ liệu
 
-  routes/
-    solverRoutes.js                 Dinh nghia API endpoints
+### Bước 1: Frontend gửi dữ liệu
 
-  controllers/
-    solverController.js             Xu ly HTTP request response
+Frontend gửi một object như sau:
 
-  services/
-    solverService.js                Logic business chinh
-
-  algorithms/
-    hamiltonianPath.js              Thuat toan Hamiltonian Path
-
-  utils/
-    graphUtils.js                   Ham tien ich do thi
-    hamiltonianPathExample.js       Vi du su dung
-
-
-LUONG DU LIEU
-
-1 Frontend gui
+```json
 {
-  grid [[null null ...] [null 1 ...]]
-  start [0 0]
+  "grid": [[0, 0, 0], [0, 1, 0], [0, 0, 0]],
+  "start": [0, 0]
 }
+```
 
-POST http localhost 5000 api send result
+### Bước 2: Backend nhận request
 
-2 Backend xu ly
+Request đi qua các tầng:
 
-server.js
-  app.js middleware
-  routes solverRoutes.js
-  controllers solverController.js validate input
-  services solverService.js logic chinh
-  algorithms hamiltonianPath.js DFS backtracking
-  utils graphUtils.js helper
+1. `server.js`
+2. `app.js`
+3. `routes/solverRoutes.js`
+4. `controllers/solverController.js`
+5. `services/solverService.js`
+6. `algorithms/hamiltonianPath.js`
+7. `utils/graphUtils.js`
 
-3 Frontend nhan
+### Bước 3: Backend trả kết quả
 
-{
-  success true
-  message Tim duoc duong di Hamilton
-  data
-    grid [...]
-    start [0 0]
-    path [[0 0] [0 1] ...]
-    status solved
-    stats
-      vertexCount 9
-      numEdges 12
-      dfsCallCount 45
-      executionTime 2ms
-}
+Backend trả lại một JSON có:
 
+- `path`: đường đi tìm được
+- `status`: trạng thái xử lý
+- `message`: thông báo cho người dùng
+- `stats`: số đỉnh, số cạnh, thời gian chạy...
 
-CAC FILE CHINH VA CONG DUNG
+## 4. Vai trò từng file
 
-1 algorithms hamiltonianPath.js
+### `server.js`
 
-Cong dung Thuat toan tim duong di Hamilton
+- Khởi động server.
+- Lắng nghe cổng 5001.
+- Bắt các sự kiện như `SIGINT`, `SIGTERM`, `error`.
 
-Ham chinh
-findHamiltonianPath adjacencyList startVertex numVertices useHeuristic
-Tra ve path hoac null
+### `app.js`
 
-findHamiltonianPathWithStats
-Tra ve path found callCount executionTime heuristicUsed
+- Tạo Express app.
+- Gắn middleware CORS và JSON parser.
+- Gắn router `/api`.
 
-Nguyen ly
-DFS tim kiem theo chieu sau
-Backtracking hoan tac
-Heuristic uu tien dinh co it lua chon
+### `solverRoutes.js`
 
-Do phuc tap
-Time O n factorial worst case
-Space O n
+- Định nghĩa endpoint.
+- Hiện tại endpoint chính là `POST /api/send-result`.
 
+### `solverController.js`
 
-2 utils graphUtils.js
+- Nhận dữ liệu từ frontend.
+- Kiểm tra input.
+- Gọi service.
+- Trả response JSON.
 
-Cong dung Ham tien ich do thi
+### `solverService.js`
 
-Ham chinh
-gridToAdjacencyList grid
-Chuyen grid 2D thanh adjacency list
+- Xử lý logic chính.
+- Chuyển grid thành đồ thị.
+- Tìm start vertex.
+- Gọi thuật toán Hamilton.
+- Đổi kết quả từ vertex ID sang tọa độ grid.
 
-countUnvisitedNeighbors neighbors visited
-Dem so neighbor chua visit
+### `hamiltonianPath.js`
 
-isValidGraph adjacencyList numVertices
-Kiem tra hop le
+- Chứa thuật toán DFS + backtracking.
+- Có thêm heuristic để giảm số nhánh phải thử.
 
-getGraphInfo adjacencyList numVertices
-Lay thong tin do thi
+### `graphUtils.js`
 
+- Chuyển grid 2D thành adjacency list.
+- Kiểm tra đồ thị hợp lệ.
+- Lấy thông tin thống kê đồ thị.
 
-3 services solverService.js
+## 5. Quy ước dữ liệu
 
-Cong dung Logic business chinh
+### Backend
 
-Ham
-solvePuzzle grid start
+- `0` = ô đi được
+- `1` = vật cản
 
-Buoc xu ly
-Validate input
-Chuyen grid sang adjacency list
-Tim vertex ID cua start
-Goi thuat toan Hamilton
-Chuyen ket qua sang toa do grid
-Tra ve object
+### Frontend
 
+Frontend có thể dùng quy ước hiển thị riêng, nhưng khi gửi lên backend phải đổi về format trên.
 
-CACH CHAY VA TEST
+## 6. Thuật toán đang dùng
 
-1 Chay server
+### DFS
 
+DFS đi sâu từng nhánh một.
+
+### Backtracking
+
+Nếu đi sai đường thì quay lui để thử nhánh khác.
+
+### Heuristic
+
+Ở đây dùng Degree Heuristic:
+
+- ưu tiên đỉnh có ít neighbor chưa thăm nhất
+- giúp tránh dead end
+- thường nhanh hơn khi grid lớn
+
+## 7. Cách chạy backend
+
+### Chạy server
+
+```bash
 cd backend
 npm install
-node server.js
+npm start
+```
 
-Server chay tai http localhost 5000
+Server chạy tại:
 
+```text
+http://localhost:5001
+```
 
-2 Test truc tiep
+### Chạy ví dụ
 
-node utils hamiltonianPathExample.js
+```bash
+npm run example
+```
 
+Lệnh này chạy file `utils/hamiltonianPathExample.js`.
 
-3 Test HTTP
+## 8. API chính
 
-POST http localhost 5000 api send result
+### `POST /api/send-result`
 
-Body
+#### Request
+
+```json
 {
-  grid [
-    [null null null]
-    [null 1 null]
-    [null null null]
-  ]
-  start [0 0]
+  "grid": [[0, 0, 0], [0, 1, 0], [0, 0, 0]],
+  "start": [0, 0]
 }
+```
 
+#### Response
 
-HEURISTIC DEGREE HEURISTIC
-
-Dinh nghia
-Tai moi buoc uu tien dinh co it neighbor chua visit
-
-Vi du
-Dinh A co 5 neighbor
-Dinh B co 1 neighbor
-Chon B truoc
-
-Hieu qua
-Giam so lan DFS
-Tim nhanh hon
-Khong thay doi ket qua
-
-
-GRID TO ADJACENCY LIST
-
-Vi du
-
-Grid 2x2
-[null null]
-[null 1]
-
-Danh so
-[0 1]
-[2 X]
-
-Ket noi
-0 1
-0 2
-
-Adjacency List
-0 [1 2]
-1 [0]
-2 [0]
-
-
-VI DU INPUT OUTPUT
-
-Input
+```json
 {
-  grid [
-    [null null null]
-    [null 1 null]
-    [null null null]
-  ]
-  start [0 0]
+  "status": "success",
+  "data": {
+    "status": "solved",
+    "message": "Tìm được đường đi Hamilton!",
+    "path": [[0, 0], [0, 1], [0, 2]],
+    "stats": {
+      "vertexCount": 8,
+      "numEdges": 11,
+      "avgDegree": 2.75,
+      "dfsCallCount": 24,
+      "executionTime": "1ms"
+    }
+  }
 }
+```
 
-Output
-{
-  success true
-  message Du lieu nhan thanh cong
-  data
-    grid [...]
-    start [0 0]
-    gridSize 3x3
-    obstacleCount 1
-    path [[0 0] [0 1] ...]
-    status solved
-    message Tim duoc duong di Hamilton
-    stats
-      vertexCount 8
-      numEdges 11
-      avgDegree 2.75
-      dfsCallCount 24
-      executionTime 1ms
-      heuristicUsed true
-}
+## 9. Ý nghĩa các trạng thái
 
+- `solved`: tìm được lời giải.
+- `no_solution`: không tồn tại đường đi Hamilton.
+- `invalid_start`: start nằm trên ô vật cản.
 
-DEBUG TROUBLESHOOTING
+## 10. Lỗi thường gặp
 
-Vi tri bat dau khong hop le
-Start nam o vat can
-Chuyen sang o trong
+### Start không hợp lệ
 
-Khong co duong di Hamilton
-Do thi bi phan tach
-Day la ket qua dung
+Nguyên nhân:
 
-Do thi khong hop le
-Loi khi chuyen grid
-Kiem tra format
+- Start đang trỏ vào ô vật cản.
 
-Chay cham
-Grid qua lon
-Nen gioi han kich thuoc hoac them timeout
+Cách xử lý:
+
+- Chọn lại start trên ô đi được.
+
+### Không có đường đi Hamilton
+
+Nguyên nhân:
+
+- Đồ thị bị chia cắt.
+- Có ô bị cô lập.
+
+Đây là kết quả đúng của thuật toán.
+
+### Chạy chậm
+
+Nguyên nhân:
+
+- Bài toán Hamilton rất nặng.
+- Grid càng lớn càng chậm.
+
+Cách xử lý:
+
+- Giảm kích thước grid.
+- Dùng heuristic.
+- Giới hạn timeout.
+
+## 11. Ghi chú nhanh cho người mới học
+
+- `controller` chỉ nên xử lý request/response.
+- `service` chứa logic chính.
+- `algorithm` chứa thuật toán.
+- `utils` chứa hàm hỗ trợ.
+- Tách file như vậy giúp code dễ đọc và dễ bảo trì hơn.
