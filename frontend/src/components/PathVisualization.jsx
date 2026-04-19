@@ -16,6 +16,9 @@ const PathVisualization = ({ grid, start, result }) => {
   // Danh sách ô đang được tô vàng theo animation.
   const [animatedPath, setAnimatedPath] = useState([]);
 
+  // Ô hiện tại đang được duyệt trong animation.
+  const [currentAnimatedCell, setCurrentAnimatedCell] = useState(null);
+
   // Cờ đang chạy animation để disable nút chạy lại.
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -36,10 +39,12 @@ const PathVisualization = ({ grid, start, result }) => {
     clearAnimationTimeouts();
     setIsAnimating(true);
     setAnimatedPath([]);
+    setCurrentAnimatedCell(null);
 
     // Mỗi ANIMATION_STEP_MS, tô thêm 1 ô trong path.
     path.forEach((cell, index) => {
       const timeoutId = setTimeout(() => {
+        setCurrentAnimatedCell(`${cell[0]},${cell[1]}`);
         setAnimatedPath((prev) => [...prev, `${cell[0]},${cell[1]}`]);
       }, index * ANIMATION_STEP_MS);
 
@@ -49,6 +54,7 @@ const PathVisualization = ({ grid, start, result }) => {
     // Khi chạy hết path thì tắt cờ animation.
     const endTimeoutId = setTimeout(() => {
       setIsAnimating(false);
+      setCurrentAnimatedCell(null);
     }, path.length * ANIMATION_STEP_MS);
 
     animationTimeoutsRef.current.push(endTimeoutId);
@@ -100,9 +106,14 @@ const PathVisualization = ({ grid, start, result }) => {
       return "bg-green-500";
     }
 
+    // Ô đang chạy hiện tại dùng màu riêng để dễ theo dõi.
+    if (currentAnimatedCell === cellKey) {
+      return "bg-sky-400 animate-pulse";
+    }
+
     // Sau đó là màu path animation.
     if (animatedPath.includes(cellKey)) {
-      return "bg-yellow-400 animate-pulse";
+      return "bg-yellow-400";
     }
 
     // Theo quy ước UI: cell === 1 là ô đi được (cam)
