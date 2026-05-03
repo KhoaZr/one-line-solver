@@ -296,7 +296,7 @@ const Input = ({ onSolve, onGridUpdate }) => {
 
     try {
       // Gọi API backend bằng phương thức POST.
-      const response = await fetch("http://localhost:5001/api/send-result", {
+      const response = await fetch("https://one-line-solver.onrender.com/api/send-result", {
         method: "POST",
         headers: {
           // Báo cho server biết body là JSON.
